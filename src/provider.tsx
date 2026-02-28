@@ -2,8 +2,8 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
-  type ReactNode,
 } from 'react';
 import { Kysely } from 'kysely';
 import { OpSqliteDialect } from './dialect';
@@ -12,12 +12,12 @@ import type { OpSqliteDriverConfig } from './driver';
 export type OnError = (error: Error) => void;
 
 export interface KyselyOpSqliteProviderProps<T> extends Omit<OpSqliteDriverConfig, 'onError'> {
-  children: ReactNode;
+  children: React.ReactNode;
   onInit?: (db: Kysely<T>) => Promise<void>;
   onError?: OnError;
 }
 
-interface KyselyContextValue<T> {
+export interface KyselyContextValue<T> {
   db: Kysely<T> | null;
   isReady: boolean;
   error: Error | null;
@@ -34,14 +34,20 @@ export function KyselyOpSqliteProvider<T>({
   disableStrictModeCreateTable,
   onInit,
   onError,
-}: KyselyOpSqliteProviderProps<T>): ReactNode {
+}: KyselyOpSqliteProviderProps<T>): React.JSX.Element {
   const [db, setDb] = useState<Kysely<T> | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const initialized = useRef(false);
+  const kyselyRef = useRef<Kysely<T> | null>(null);
 
   useEffect(() => {
+    if (initialized.current) {
+      return;
+    }
+    initialized.current = true;
+
     let mounted = true;
-    let kyselyInstance: Kysely<T> | null = null;
 
     const initDatabase = async () => {
       try {
@@ -54,7 +60,8 @@ export function KyselyOpSqliteProvider<T>({
           onError: onError ? (msg, err) => onError(err instanceof Error ? err : new Error(String(err))) : undefined,
         });
 
-        kyselyInstance = new Kysely<T>({ dialect });
+        const kyselyInstance = new Kysely<T>({ dialect });
+        kyselyRef.current = kyselyInstance;
 
         if (onInit) {
           await onInit(kyselyInstance);
@@ -77,17 +84,16 @@ export function KyselyOpSqliteProvider<T>({
 
     return () => {
       mounted = false;
-      if (kyselyInstance) {
-        kyselyInstance.destroy().catch(console.error);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (kyselyRef.current) {
+        kyselyRef.current.destroy().catch(console.error);
       }
     };
-  }, [
-    database,
-    debug,
-    autoAffinityConversion,
-    disableForeignKeys,
-    disableStrictModeCreateTable,
-  ]);
+  }, []);
 
   const contextValue: KyselyContextValue<T> = {
     db,

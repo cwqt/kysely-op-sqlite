@@ -17,12 +17,22 @@ export class OpSqliteDriver implements Driver {
   private connection: OpSqliteConnection | null = null;
   private readonly mutex = new ConnectionMutex();
   private readonly config: OpSqliteDriverConfig;
+  private initPromise: Promise<void> | null = null;
 
   constructor(config: OpSqliteDriverConfig) {
     this.config = config;
   }
 
   async init(): Promise<void> {
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    this.initPromise = this.doInit();
+    return this.initPromise;
+  }
+
+  private async doInit(): Promise<void> {
     if (this.isExistingDb(this.config.database)) {
       this.db = this.config.database;
     } else {
@@ -44,10 +54,18 @@ export class OpSqliteDriver implements Driver {
   }
 
   async acquireConnection(): Promise<DatabaseConnection> {
-    await this.mutex.lock();
+    // Ensure driver is initialized before acquiring connection
     if (!this.connection) {
+      await this.init();
+    }
+
+    await this.mutex.lock();
+
+    if (!this.connection) {
+      this.mutex.unlock();
       throw new Error('Driver not initialized');
     }
+
     return this.connection;
   }
 
@@ -84,6 +102,7 @@ export class OpSqliteDriver implements Driver {
       this.db.close();
       this.db = null;
       this.connection = null;
+      this.initPromise = null;
     }
   }
 
