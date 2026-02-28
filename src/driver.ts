@@ -1,6 +1,5 @@
 import type { DatabaseConnection, Driver } from 'kysely';
 import { open, type DB } from '@op-engineering/op-sqlite';
-import { ConnectionMutex } from './connection-mutex';
 import { OpSqliteConnection } from './connection';
 
 export interface OpSqliteDriverConfig {
@@ -15,7 +14,6 @@ export interface OpSqliteDriverConfig {
 export class OpSqliteDriver implements Driver {
   private db: DB | null = null;
   private connection: OpSqliteConnection | null = null;
-  private readonly mutex = new ConnectionMutex();
   private readonly config: OpSqliteDriverConfig;
   private initPromise: Promise<void> | null = null;
 
@@ -54,19 +52,10 @@ export class OpSqliteDriver implements Driver {
   }
 
   async acquireConnection(): Promise<DatabaseConnection> {
-    // Ensure driver is initialized before acquiring connection
     if (!this.connection) {
       await this.init();
     }
-
-    await this.mutex.lock();
-
-    if (!this.connection) {
-      this.mutex.unlock();
-      throw new Error('Driver not initialized');
-    }
-
-    return this.connection;
+    return this.connection!;
   }
 
   async beginTransaction(connection: DatabaseConnection): Promise<void> {
@@ -94,7 +83,7 @@ export class OpSqliteDriver implements Driver {
   }
 
   async releaseConnection(): Promise<void> {
-    this.mutex.unlock();
+    // no-op: single connection is reused
   }
 
   async destroy(): Promise<void> {
