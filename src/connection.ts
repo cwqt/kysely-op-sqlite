@@ -81,6 +81,11 @@ export class OpSqliteConnection implements DatabaseConnection {
       return sql;
     }
 
+    // Skip STRICT mode for Kysely internal tables (they use varchar which isn't STRICT-compatible)
+    if (normalized.includes('KYSELY_MIGRATION')) {
+      return sql;
+    }
+
     const trimmed = sql.trimEnd();
     if (trimmed.endsWith(')')) {
       return trimmed + ' STRICT';

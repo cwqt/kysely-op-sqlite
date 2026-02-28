@@ -1,21 +1,24 @@
 export class ConnectionMutex {
-  private promise: Promise<void> = Promise.resolve();
-  private resolve: (() => void) | null = null;
+  private queue: (() => void)[] = [];
+  private locked = false;
 
   async lock(): Promise<void> {
-    const prevPromise = this.promise;
-    let releaseLock: () => void;
-    this.promise = new Promise<void>((resolve) => {
-      releaseLock = resolve;
+    if (!this.locked) {
+      this.locked = true;
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      this.queue.push(resolve);
     });
-    this.resolve = releaseLock!;
-    await prevPromise;
   }
 
   unlock(): void {
-    if (this.resolve) {
-      this.resolve();
-      this.resolve = null;
+    const next = this.queue.shift();
+    if (next) {
+      next();
+    } else {
+      this.locked = false;
     }
   }
 }
