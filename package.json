@@ -1,0 +1,31 @@
+{
+  "name": "kysely-op-sqlite",
+  "version": "0.1.0",
+  "description": "Kysely dialect for @op-engineering/op-sqlite",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "kysely",
+    "sqlite",
+    "op-sqlite",
+    "react-native",
+    "database"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@op-engineering/op-sqlite": ">=9.0.0",
+    "kysely": ">=0.27.0"
+  },
+  "devDependencies": {
+    "@op-engineering/op-sqlite": "^15.2.5",
+    "kysely": "^0.27.0",
+    "typescript": "~5.8.3"
+  }
+}
