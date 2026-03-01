@@ -144,22 +144,32 @@ Without the mutex, concurrent queries cause SQLite lock contention at the native
 
 **Without JS mutex (concurrent queries contend at SQLite level):**
 ```
-query1 ━━━━━━━━━━━━━━━━━━━━━━━                             396ms
-query2 ━━━━━━━━━━━━━━━━━━━━━━━                             394ms
-query3              ━━━━━━━━━━━                            195ms
-query4 ━━━━━━━━━━━━━━━━━━━━━━━━━━━                         464ms
-query5  ━━━━━━━━━━━━━━━━━━━━━━━━━━                         445ms
-                                                 total: 862ms
+getActiveProgramQuer ━━━━━━━━━━━━━━━━━━━━━━━                             396ms
+listRestDaysQuery    ━━━━━━━━━━━━━━━━━━━━━━━                             394ms
+listPreWorkoutSurvey             ━━━━━━━━━━━                             195ms
+listRestDaysQuery                           ━━━━                          68ms
+listWorkoutHistoryQu ━━━━━━━━━━━━━━━━━━━━━━━━━━━                         464ms
+listWorkoutHistoryQu  ━━━━━━━━━━━━━━━━━━━━━━━━━━                         445ms
+getTrainingLoadQuery             ━━━━━━━━━━━━━━━                         257ms
+listWorkoutHistoryQu             ━━━━━━━━━━━━━━━                         253ms
+listWorkoutHistoryQu                        ━━━━━━━━━━━━━━━━━━━━━━━━━━━  466ms
+
+                                                                total: 862ms
 ```
 
 **With JS mutex (queries run sequentially, no contention):**
 ```
-query1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     375ms
-query2 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    388ms
-query3                          ━━━━━━━━━━━━━━━━━━━━━━━━━  209ms
-query4                                                ━━━   25ms
-query5                                                ━━━   27ms
-                                                 total: 402ms
+getActiveProgramQuer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━     375ms
+listRestDaysQuery    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━    388ms
+listPreWorkoutSurvey                         ━━━━━━━━━━━━━━━━━━━━━━━━━━  209ms
+listRestDaysQuery                                                   ━━━   25ms
+listWorkoutHistoryQu ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  399ms
+listWorkoutHistoryQu   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   381ms
+getTrainingLoadQuery                         ━━━━━━━━━━━━━━━━━━━━━━━━━━  207ms
+listWorkoutHistoryQu                          ━━━━━━━━━━━━━━━━━━━━━━━━━  203ms
+listWorkoutHistoryQu                                                ━━━   27ms
+
+                                                                total: 402ms
 ```
 
 Same queries, but **2x faster** with the mutex because:
