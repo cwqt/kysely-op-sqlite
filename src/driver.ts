@@ -8,6 +8,7 @@ export interface OpSqliteDriverConfig {
   disableForeignKeys?: boolean;
   disableStrictModeCreateTable?: boolean;
   autoAffinityConversion?: boolean;
+  disableMutex?: boolean;
   debug?: boolean;
   onError?: (message: string, error: unknown) => void;
 }
@@ -57,7 +58,9 @@ export class OpSqliteDriver implements Driver {
     if (!this.connection) {
       await this.init();
     }
-    await this.mutex.lock();
+    if (!this.config.disableMutex) {
+      await this.mutex.lock();
+    }
     return this.connection!;
   }
 
@@ -86,7 +89,9 @@ export class OpSqliteDriver implements Driver {
   }
 
   async releaseConnection(): Promise<void> {
-    this.mutex.unlock();
+    if (!this.config.disableMutex) {
+      this.mutex.unlock();
+    }
   }
 
   async destroy(): Promise<void> {

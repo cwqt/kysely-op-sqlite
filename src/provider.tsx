@@ -32,6 +32,7 @@ export function KyselyOpSqliteProvider<T>({
   autoAffinityConversion,
   disableForeignKeys,
   disableStrictModeCreateTable,
+  disableMutex,
   onInit,
   onError,
 }: KyselyOpSqliteProviderProps<T>): React.JSX.Element {
@@ -57,6 +58,7 @@ export function KyselyOpSqliteProvider<T>({
           autoAffinityConversion,
           disableForeignKeys,
           disableStrictModeCreateTable,
+          disableMutex,
           onError: onError ? (msg, err) => onError(err instanceof Error ? err : new Error(String(err))) : undefined,
         });
 
